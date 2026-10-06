@@ -1,7 +1,7 @@
 """The mathematics of clt-draw, with no user interface.
 
 You supply a curve (non-negative values on an evenly spaced grid). It is treated as a probability
-density and discretised onto a *lattice* of ``LATTICE`` points, so that every random variable below
+density and discretized onto a *lattice* of ``LATTICE`` points, so that every random variable below
 takes values k = 0, 1, ..., LATTICE - 1 with probabilities p[k].
 
 Sums are never sampled. The probability mass function (pmf) of a sum of independent draws is the
@@ -9,7 +9,7 @@ convolution of the individual pmfs, so we compute it exactly. To save work we on
 
     pmf of n draws   =   (pmf of n/2 draws)  convolved with itself          n = 2, 4, 8, ..., 1024
 
-which is 10 FFT convolutions in total instead of 1023 for n = 1024. Each pmf is then standardised
+which is 10 FFT convolutions in total instead of 1023 for n = 1024. Each pmf is then standardized
 (mean 0, standard deviation 1) so that every n can be drawn on the same axes and compared with the
 standard normal curve.
 """
@@ -22,8 +22,8 @@ import numpy as np
 
 LATTICE = 1024           # points the drawn curve is resampled to
 LEVELS = 10              # n = 2**1 ... 2**10
-Z_MAX = 4.0              # the plot shows z in [-Z_MAX, Z_MAX]
-Z_POINTS = 801           # samples of each density across that range
+Z_MAX = 5.0              # the plot shows z in [-Z_MAX, Z_MAX]
+Z_POINTS = 1001          # samples of each density across that range
 MIN_COLUMNS = 20         # a curve must cover at least this many of the drawing columns
 
 Z_GRID = np.linspace(-Z_MAX, Z_MAX, Z_POINTS)
@@ -31,13 +31,13 @@ Z_GRID = np.linspace(-Z_MAX, Z_MAX, Z_POINTS)
 
 @dataclass
 class Level:
-    """The standardised sum of ``n`` independent draws from the user's density."""
+    """The standardized sum of ``n`` independent draws from the user's density."""
 
     n: int
     density: np.ndarray      # density of Z_n at Z_GRID
     ks: float                # Kolmogorov distance to the standard normal, sup |F_n - Phi|
     skew: float              # skewness (the normal has 0)
-    excess_kurtosis: float   # excess kurtosis (the normal has 0)
+    kurtosis: float          # kurtosis, E[Z^4] (the normal has 3)
 
 
 def normal_pdf(z: np.ndarray) -> np.ndarray:
@@ -84,8 +84,8 @@ def convolve_with_itself(pmf: np.ndarray) -> np.ndarray:
     return out / out.sum()
 
 
-def _standardised_level(pmf: np.ndarray, n: int, mean_idx: float, std_idx: float) -> Level:
-    """Standardise the pmf of a sum of n draws and measure how normal it is."""
+def _standardized_level(pmf: np.ndarray, n: int, mean_idx: float, std_idx: float) -> Level:
+    """Standardize the pmf of a sum of n draws and measure how normal it is."""
     k = np.arange(pmf.size)
     scale = std_idx * np.sqrt(n)                     # lattice units per unit of z
     z = (k - n * mean_idx) / scale
@@ -97,12 +97,12 @@ def _standardised_level(pmf: np.ndarray, n: int, mean_idx: float, std_idx: float
     ks = float(max(np.abs(cdf - phi).max(), np.abs(cdf - pmf - phi).max()))   # both sides of each jump
 
     skew = float(np.dot(pmf, z ** 3))
-    kurt = float(np.dot(pmf, z ** 4)) - 3.0
-    return Level(n=n, density=density, ks=ks, skew=skew, excess_kurtosis=kurt)
+    kurt = float(np.dot(pmf, z ** 4))
+    return Level(n=n, density=density, ks=ks, skew=skew, kurtosis=kurt)
 
 
 def iter_levels(values: np.ndarray, levels: int = LEVELS) -> Iterator[Level]:
-    """Yield the standardised sum for n = 1 (the curve itself), then n = 2, 4, ..., 2**levels.
+    """Yield the standardized sum for n = 1 (the curve itself), then n = 2, 4, ..., 2**levels.
 
     A generator, so a UI can draw each result as soon as it exists.
     """
@@ -114,10 +114,10 @@ def iter_levels(values: np.ndarray, levels: int = LEVELS) -> Iterator[Level]:
     if std_idx == 0:
         raise ValueError("the curve has zero spread")
 
-    yield _standardised_level(pmf, 1, mean_idx, std_idx)
+    yield _standardized_level(pmf, 1, mean_idx, std_idx)
     for lvl in range(1, levels + 1):
         pmf = convolve_with_itself(pmf)             # n/2 draws + n/2 draws  ->  n draws
-        yield _standardised_level(pmf, 2 ** lvl, mean_idx, std_idx)
+        yield _standardized_level(pmf, 2 ** lvl, mean_idx, std_idx)
 
 
 def compute_levels(values: np.ndarray, levels: int = LEVELS) -> list[Level]:

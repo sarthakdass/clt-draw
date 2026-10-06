@@ -62,7 +62,7 @@ class App:
         self.rail_y = 650
         self.chart_rect = pygame.Rect(676, 580, 384, 156)
 
-        self.show_normal, self.show_original = True, True
+        self.show_normal, self.show_original = False, False      # both off until you ask for them
         self.reset()
 
     # ---------------------------------------------------------------- state
@@ -227,6 +227,7 @@ class App:
         pygame.display.flip()
 
     def _draw_drawing_phase(self) -> None:
+        self._draw_axis("x")
         drawn = np.flatnonzero(~np.isnan(self.cols))
         if drawn.size == 0:
             self._text(self.f_body, "Drag to draw a curve above the baseline. It becomes your probability density.",
@@ -245,12 +246,15 @@ class App:
     def _z_to_px(self, z):
         return self.x0 + (np.asarray(z) + Z_MAX) / (2 * Z_MAX) * (self.x1 - self.x0)
 
-    def _draw_locked_phase(self) -> None:
-        for z in range(-4, 5):                                        # axis ticks
+    def _draw_axis(self, caption: str) -> None:
+        for z in range(-int(Z_MAX), int(Z_MAX) + 1):                    # ticks at -5 ... 5
             px = float(self._z_to_px(z))
             pygame.draw.line(self.screen, SOFT, (px, self.base), (px, self.base + 5), 1)
             self._text(self.f_small, f"{z}", (px, self.base + 8), SOFT, "midtop")
-        self._text(self.f_small, "z : standard deviations from the mean", (self.x1, self.base + 24), SOFT, "topright")
+        self._text(self.f_small, caption, (self.x1, self.base + 24), SOFT, "topright")
+
+    def _draw_locked_phase(self) -> None:
+        self._draw_axis("z : standard deviations from the mean")
 
         if not self.ready:
             done = max(len(self.levels) - 1, 0)
@@ -274,7 +278,7 @@ class App:
         lv = self.levels[self.sel + 1]
         self._text(self.f_small, f"Sum of {lv.n} draws, rescaled to mean 0 and spread 1",
                    (PLOT.left + 24, PLOT.top + 16), SOFT)
-        self._text(self.f_mono, f"n = {lv.n}   D = {lv.ks:.4f}   skew = {lv.skew:+.3f}   ex. kurtosis = {lv.excess_kurtosis:+.3f}",
+        self._text(self.f_mono, f"n = {lv.n}   D = {lv.ks:.4f}   skew = {lv.skew:+.3f}   kurtosis = {lv.kurtosis:.3f}",
                    (PLOT.right - 24, PLOT.top + 16), TEXT, "topright")
 
     def _draw_rail(self) -> None:

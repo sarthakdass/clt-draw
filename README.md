@@ -28,19 +28,19 @@ Needs Python 3.9+, `numpy` and `pygame`.
 | **Submit curve** (or Enter) | Lock the curve in and precompute every n |
 | Click a tick, or ← / → | Choose n = 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 |
 | **Redraw** (or Esc / R) | Start over |
-| Check boxes | Show or hide the standard normal curve and your original curve |
+| Check boxes | Show the standard normal curve and your original curve (both off by default) |
 
-The readout shows the Kolmogorov distance **D** to the normal curve, plus skewness and excess
-kurtosis (both 0 for a normal). The small chart plots D against n on a log scale with a dashed
+The readout shows the Kolmogorov distance **D** to the normal curve, plus skewness and kurtosis
+(0 and 3 for a normal curve). The small chart plots D against n on a log scale with a dashed
 1/√n guide.
 
 ## How it works
 
 **Your curve becomes a lattice distribution.** The curve is resampled to $M = 1024$ evenly spaced
-points and normalised so the values $p_0,\dots,p_{M-1}$ sum to 1. That is the probability mass
+points and normalized so the values $p_0,\dots,p_{M-1}$ sum to 1. That is the probability mass
 function of one draw $X$, taking the values $k = 0, 1, \dots, M-1$.
 
-**Sums are exact, not sampled.** For independent draws, the mass function of a sum is the
+**Sums are exact.** For independent draws, the mass function of a sum is the
 convolution of the individual ones:
 
 $$P(X_1 + X_2 = s) = \sum_k p_k\, p_{s-k} = (p * p)_s .$$
@@ -58,7 +58,7 @@ $$\widehat{p^{*2n}} = \big(\widehat{p^{*n}}\big)^{2}.$$
 
 The result is exact up to the 1024-point lattice and floating-point round-off.
 
-**Standardise so every n fits on one axis.** A sum of $n$ draws has mean $n\mu$ and standard deviation
+**Standardize so every n fits on one axis.** A sum of $n$ draws has mean $n\mu$ and standard deviation
 $\sigma\sqrt n$, so it keeps spreading out. Rescaling,
 
 $$Z_n = \frac{S_n - n\mu}{\sigma\sqrt n}, \qquad g_n(z) = \sigma\sqrt n \; P(S_n = k)\Big|_{z = (k - n\mu)/(\sigma\sqrt n)},$$
@@ -74,18 +74,19 @@ $$D_n = \sup_z \lvert F_n(z) - \Phi(z) \rvert,$$
 
 and the Berry–Esseen theorem bounds it by $C\,\rho/(\sigma^3\sqrt n)$ with $\rho = \mathbb E|X-\mu|^3$,
 which is why the dashed guide in the chart falls like $1/\sqrt n$. Cumulants add under independent
-sums, so skewness and excess kurtosis shrink *exactly* like
+sums, so skewness $\gamma$ shrinks *exactly* like $1/\sqrt n$, and kurtosis $\beta$ approaches its normal
+value of 3 *exactly* like $1/n$:
 
-$$\gamma_n = \frac{\gamma_1}{\sqrt n}, \qquad \kappa_n = \frac{\kappa_1}{n},$$
+$$\gamma_n = \frac{\gamma_1}{\sqrt n}, \qquad \beta_n - 3 = \frac{\beta_1 - 3}{n},$$
 
 and the code checks that in its tests.
 
 ## Project layout
 
 ```
-clt_draw/core.py   the mathematics: lattice, doubling convolution, standardising, distances (numpy only)
+clt_draw/core.py   the mathematics: lattice, doubling convolution, standardizing, distances (numpy only)
 clt_draw/app.py    the Pygame interface
-tests/             pytest suite for the core (doubling vs. direct convolution, exact skew/kurtosis scaling, ...)
+tests/             pytest suite for the core (doubling vs. direct convolution, exact skewness/kurtosis scaling, ...)
 docs/              screenshots
 ```
 
