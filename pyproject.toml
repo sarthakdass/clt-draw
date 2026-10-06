@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clt-draw"
+version = "0.1.0"
+description = "Draw a probability density and watch sums of independent draws converge to a normal curve."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.24", "pygame>=2.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+clt-draw = "clt_draw.app:main"
+
+[tool.setuptools.packages.find]
+include = ["clt_draw*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
