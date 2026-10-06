@@ -21,3 +21,4 @@ include = ["clt_draw*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]          # lets plain `pytest` import clt_draw without installing it
